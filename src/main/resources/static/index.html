@@ -1,219 +1,402 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Casdoor Authentication Demo</title>
-    <style>
-      :root {
-        --bg-color: #2c303a; 
-        --text-color: #e0e0e0;
-        --primary-color: #6c63ff; 
-        --primary-color-dark: #5750d6;
-        --accent-color: #ff9a8b; 
-        --surface-color: #353945;
-        --border-color: #4a4e5a;
-        --shadow-light: rgba(255, 255, 255, 0.05);
-        --shadow-dark: rgba(0, 0, 0, 0.3);
-        --font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Casdoor Authentication & WebSocket Demo</title>
+  <style>
+    :root {
+      --bg-color: #2c303a;
+      --text-color: #e0e0e0;
+      --primary-color: #6c63ff;
+      --primary-color-dark: #5750d6;
+      --accent-color: #ff9a8b;
+      --surface-color: #353945;
+      --border-color: #4a4e5a;
+      --shadow-light: rgba(255, 255, 255, 0.05);
+      --shadow-dark: rgba(0, 0, 0, 0.3);
+      --font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      --success-color: lightgreen;
+      --danger-color: lightcoral;
+    }
 
-      body {
-        font-family: var(--font-family);
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        margin: 0;
-        padding: 20px;
-        box-sizing: border-box;
-      }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      min-height: 100vh;
+      margin: 0;
+    }
 
-      .container {
-        background-color: var(--surface-color);
-        padding: 30px 40px;
-        border-radius: 15px;
-        box-shadow: 
-          -8px -8px 16px var(--shadow-light),
-           8px  8px 16px var(--shadow-dark);
-        text-align: center;
-        width: 100%;
-        max-width: 500px;
-      }
+    .container {
+      background-color: var(--surface-color);
+      padding: 30px 40px;
+      border-radius: 15px;
+      box-shadow:
+        -8px -8px 16px var(--shadow-light),
+         8px  8px 16px var(--shadow-dark);
+      text-align: center;
+      width: 100%;
+      max-width: 600px; /* Increased max-width for more content */
+      margin-bottom: 20px; /* Added margin for separation */
+    }
 
-      h1 {
-        color: #ffffff;
-        font-size: 2.2rem;
-        margin-bottom: 15px;
-        font-weight: 600;
-      }
-
-      #status {
-        margin-bottom: 25px;
-        font-size: 1.1rem;
-        color: #b0b0b0;
-        min-height: 1.5em; 
-      }
-
-      .button-group {
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        margin-bottom: 25px;
-      }
-
-      button {
-        padding: 12px 25px;
-        font-size: 1rem;
-        font-weight: 500;
-        border: none;
-        border-radius: 10px;
-        color: white;
-        cursor: pointer;
-        transition: all 0.2s ease-in-out;
-        background-color: var(--primary-color);
-        box-shadow: 
-          -5px -5px 10px var(--shadow-light),
-           5px  5px 10px var(--shadow-dark);
-      }
-
-      button:hover {
-        background-color: var(--primary-color-dark);
-        transform: translateY(-2px);
-         box-shadow: 
-          -7px -7px 14px var(--shadow-light),
-           7px  7px 14px var(--shadow-dark);
-      }
-      
-      button:active {
-        transform: translateY(1px);
-        box-shadow: 
-          -2px -2px 5px var(--shadow-light),
-           2px  2px 5px var(--shadow-dark);
-      }
+    h1, h2 {
+      color: #ffffff;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+    h1 { font-size: 2.2rem; }
+    h2 { font-size: 1.8rem; margin-top: 30px;}
 
 
-      button.secondary {
-        background-color: var(--accent-color);
-      }
-      button.secondary:hover {
-        background-color: #e8897a;
-      }
+    #status {
+      margin-bottom: 25px;
+      font-size: 1.1rem;
+      color: #b0b0b0;
+      min-height: 1.5em;
+    }
 
+    .button-group {
+      display: flex;
+      flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 25px;
+    }
 
-      #userinfo-container {
-        margin-top: 30px;
-        width: 100%;
-      }
-      
-      #userinfo {
-        display: none;
-        background-color: var(--bg-color); 
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 20px;
-        max-width: 100%; 
-        white-space: pre-wrap;
-        word-break: break-word;
-        box-shadow: 
-          inset -5px -5px 10px var(--shadow-light),
-          inset  5px  5px 10px var(--shadow-dark);
-        color: #f0f0f0;
-        text-align: left;
-        font-family: "Courier New", Courier, monospace;
-        font-size: 0.9rem;
-      }
+    button {
+      padding: 12px 25px;
+      font-size: 1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      background-color: var(--primary-color);
+      box-shadow:
+        -5px -5px 10px var(--shadow-light),
+         5px  5px 10px var(--shadow-dark);
+    }
 
-      button:focus-visible {
-        outline: 2px solid var(--accent-color);
-        outline-offset: 2px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Casdoor Auth</h1>
-      <div id="status">Checking login status...</div>
-      <div class="button-group">
-        <button onclick="login()" id="loginButton">Login with Casdoor</button>
-        <button onclick="getUserInfo()" id="userInfoButton" class="secondary">Get User Info</button>
-      </div>
+    button:hover {
+      background-color: var(--primary-color-dark);
+      transform: translateY(-2px);
+       box-shadow:
+        -7px -7px 14px var(--shadow-light),
+         7px  7px 14px var(--shadow-dark);
+    }
 
-      <div id="userinfo-container">
-        <pre id="userinfo"></pre>
-      </div>
+    button:active {
+      transform: translateY(1px);
+      box-shadow:
+        -2px -2px 5px var(--shadow-light),
+         2px  2px 5px var(--shadow-dark);
+    }
+
+    button.secondary {
+      background-color: var(--accent-color);
+    }
+    button.secondary:hover {
+      background-color: #e8897a;
+    }
+
+    #userinfo-container {
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    #userinfo {
+      display: none;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 100%;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow:
+        inset -5px -5px 10px var(--shadow-light),
+        inset  5px  5px 10px var(--shadow-dark);
+      color: #f0f0f0;
+      text-align: left;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    /* Styles for WebSocket updates */
+    #updates-container {
+      margin-top: 20px;
+      width: 100%;
+    }
+    .price-update {
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: var(--bg-color); /* Slightly different from surface for distinction */
+      box-shadow:
+        -3px -3px 6px var(--shadow-light),
+         3px  3px 6px var(--shadow-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .price-update strong {
+      color: var(--primary-color);
+    }
+    .price-update small {
+      color: #999;
+      font-size: 0.8em;
+    }
+    .up {
+      border-left: 5px solid var(--success-color);
+      background-color: color-mix(in srgb, var(--success-color) 10%, var(--bg-color));
+    }
+    .down {
+      border-left: 5px solid var
+(--danger-color);
+      background-color: color-mix(in srgb, var(--danger-color) 10%, var(--bg-color));
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Casdoor Auth & WebSocket</h1>
+  <div id="status">Checking login status...</div>
+  <div class="button-group">
+    <button onclick="login()" id="loginButton">Login with Casdoor</button>
+    <button onclick="getUserInfo()" id="userInfoButton" class="secondary">Get User Info</button>
+  </div>
+
+  <div id="userinfo-container">
+    <pre id="userinfo"></pre>
+  </div>
+
+  <!-- WebSocket Section -->
+  <div id="updates-container">
+    <h2>Cryptocurrency Updates</h2>
+    <div class="button-group">
+      <button id="subscribeBtn" onclick="toggleSubscription()">Subscribe to Updates</button>
     </div>
+    <div id="wsStatus" style="margin-bottom: 10px; color: #b0b0b0;">WebSocket: Disconnected</div>
+    <div id="updates">
+      <!-- Ticker updates will appear here -->
+    </div>
+  </div>
+</div>
 
-    <script>
-      function login() {
-        const userInfoElement = document.getElementById("userinfo");
-        userInfoElement.style.display = "none";
-        userInfoElement.innerText = "";
-        window.location.href = "/login";
-      }
+<script>
+  let ws = null;
+  let isSubscribed = false;
+  let webSocketUrl = null; // Will be fetched from /config
+  const oldPrices = {}; // To store previous prices for comparison
 
-      window.onload = () => {
-        const statusElement = document.getElementById("status");
-        if (getCookie("access_token")) {
-          statusElement.innerText = "Logged In!";
+  async function loadConfig() {
+    const wsStatusElement = document.getElementById("wsStatus");
+    try {
+        const response = await fetch('/config'); // Your backend /config endpoint
+        if (!response.ok) {
+            console.error('Failed to load configuration:', response.statusText);
+            // Use a default/fallback if config fails, or handle error more gracefully
+            webSocketUrl = 'wss://localhost:7443/coins'; // Ensure this matches your WebSocketConfig
+            wsStatusElement.innerText = `WebSocket: Failed to load config, using fallback ${webSocketUrl}`;
+            return;
+        }
+        const config = await response.json();
+        webSocketUrl = config.websocketUrl;
+        console.log('Configuration loaded, WebSocket URL:', webSocketUrl);
+        wsStatusElement.innerText = `WebSocket: Configured to ${webSocketUrl}`;
+    } catch (error) {
+        console.error('Error loading configuration:', error);
+        webSocketUrl = 'wss://localhost:7443/coins'; // Fallback URL
+        wsStatusElement.innerText = `WebSocket: Error loading config, using fallback ${webSocketUrl}`;
+    }
+  }
+
+  function login() {
+    const userInfoElement = document.getElementById("userinfo");
+    userInfoElement.style.display = "none";
+    userInfoElement.innerText = "";
+    window.location.href = "/login"; // Your backend endpoint that initiates OIDC
+  }
+
+  window.onload = async () => {
+    await loadConfig(); // Load WebSocket URL configuration first
+
+    const statusElement = document.getElementById("status");
+    if (getCookie("access_token")) {
+      statusElement.innerText = "Logged In!";
+    } else {
+      statusElement.innerText = "Not Logged In.";
+    }
+  };
+
+  async function getUserInfo() {
+    const token = getCookie("access_token");
+    const userInfoElement = document.getElementById("userinfo");
+
+    userInfoElement.style.display = "none";
+    userInfoElement.innerText = "Fetching user info...";
+
+    if (!token) {
+      userInfoElement.innerText = "You are not logged in. Please log in to see user info.";
+      userInfoElement.style.display = "block";
+      alert("Not logged in! If you want to see User Info, please log in first.");
+      return;
+    }
+
+    userInfoElement.style.display = "block";
+    try {
+        const res = await fetch("/userinfo", {
+        method: 'GET',
+        headers: {
+            Authorization: "Bearer " + token,
+            'Content-Type': 'application/json'
+        },
+        });
+
+        if (res.ok) {
+        const data = await res.json();
+        userInfoElement.innerText = JSON.stringify(data, null, 2);
         } else {
-          statusElement.innerText = "Not Logged In.";
+        const errorText = await res.text();
+        console.error("Failed to get user info. Status:", res.status, "Response:", errorText);
+        userInfoElement.innerText = `Failed to get user info. Server responded with ${res.status}.`;
         }
-      };
+    } catch (error) {
+        console.error("Error fetching user info:", error);
+        userInfoElement.innerText = "An error occurred while fetching user info. Check the console.";
+    }
+  }
 
-      async function getUserInfo() {
-        const token = getCookie("access_token");
-        const userInfoElement = document.getElementById("userinfo");
-        const statusElement = document.getElementById("status");
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
 
-        userInfoElement.style.display = "none"; 
-        userInfoElement.innerText = "Fetching user info...";
+  // --- WebSocket Functions ---
+  function toggleSubscription() {
+    if (isSubscribed) {
+        unsubscribe();
+    } else {
+        subscribe();
+    }
+  }
 
+  function subscribe() {
+    const token = getCookie('access_token');
+    if (!token) {
+        alert('Please login first to subscribe to updates.');
+        return;
+    }
 
-        if (!token) {
-          userInfoElement.innerText = "You are not logged in. Please log in to see user info.";
-          userInfoElement.style.display = "block";
-          alert("Not logged in! If you want to see User Info, please log in first.");
-          return;
-        }
-        
-        userInfoElement.style.display = "block";
+    if (!webSocketUrl) {
+        alert('WebSocket URL not configured. Cannot subscribe.');
+        loadConfig(); // Attempt to load config again
+        return;
+    }
+
+    // Append token as a query parameter for authentication
+    const urlWithToken = `${webSocketUrl}?token=${encodeURIComponent(token)}`;
+    console.log("Attempting to connect to WebSocket:", urlWithToken);
+    document.getElementById('wsStatus').innerText = 'WebSocket: Connecting...';
+
+    ws = new WebSocket(urlWithToken);
+
+    ws.onopen = function() {
+        console.log('Connected to WebSocket Server');
+        document.getElementById('wsStatus').innerText = 'WebSocket: Connected';
+        document.getElementById('subscribeBtn').innerText = 'Unsubscribe';
+        isSubscribed = true;
+    };
+
+    ws.onmessage = function(event) {
+        console.log('Message from server: ', event.data);
         try {
-            const res = await fetch("/userinfo", {
-            method: 'GET', 
-            headers: {
-                Authorization: "Bearer " + token,
-                'Content-Type': 'application/json' 
-            },
-            });
-
-            if (res.ok) {
-            const data = await res.json();
-            userInfoElement.innerText = JSON.stringify(data, null, 2);
-            } else {
-            const errorText = await res.text(); 
-            console.error("Failed to get user info. Status:", res.status, "Response:", errorText);
-            userInfoElement.innerText = `Failed to get user info. Server responded with ${res.status}.`;
+            const data = JSON.parse(event.data);
+            // Example: { "coin": "BTC", "timestamp": 1678886400000, "price": 25000.50 }
+            displayUpdate(data);
+        } catch (e) {
+            console.error("Error parsing WebSocket message:", e, "Data:", event.data);
+            // Handle non-JSON messages or connection confirmations if your server sends them
+            if (event.data.includes("Connection established for session")) { // Example check
+                 document.getElementById('wsStatus').innerText = `WebSocket: ${event.data}`;
             }
-        } catch (error) {
-            console.error("Error fetching user info:", error);
-            userInfoElement.innerText = "An error occurred while fetching user info. Check the console.";
         }
-      }
+    };
 
-      function getCookie(name) {
-        const nameEQ = name + "=";
-        const ca = document.cookie.split(';');
-        for(let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    ws.onclose = function(event) {
+        console.log('Disconnected from WebSocket Server. Code:', event.code, 'Reason:', event.reason);
+        document.getElementById('wsStatus').innerText = `WebSocket: Disconnected (Code: ${event.code})`;
+        document.getElementById('subscribeBtn').innerText = 'Subscribe to Updates';
+        isSubscribed = false;
+        ws = null;
+    };
+
+    ws.onerror = function(error) {
+        console.error('WebSocket Error: ', error);
+        document.getElementById('wsStatus').innerText = 'WebSocket: Error (check console)';
+    };
+  }
+
+  function unsubscribe() {
+    if (ws) {
+        ws.close();
+        console.log('Unsubscribing and closing WebSocket.');
+    }
+  }
+
+  function displayUpdate(data) {
+    // data should be an object like { coin: "BTC", timestamp: 123456789, price: 50000.00 }
+    const updatesDiv = document.getElementById('updates');
+    let updateElement = document.getElementById(`coin-${data.coin}`);
+
+    if (!updateElement) {
+        updateElement = document.createElement('div');
+        updateElement.id = `coin-${data.coin}`;
+        updateElement.className = 'price-update';
+        updatesDiv.appendChild(updateElement);
+    }
+
+    const currentPrice = parseFloat(data.price);
+    const previousPrice = oldPrices[data.coin];
+    oldPrices[data.coin] = currentPrice;
+
+    updateElement.classList.remove('up', 'down');
+    if (previousPrice !== undefined && previousPrice !== null) {
+        if (currentPrice > previousPrice) {
+            updateElement.classList.add('up');
+        } else if (currentPrice < previousPrice) {
+            updateElement.classList.add('down');
         }
-        return null;
-      }
-    </script>
-  </body>
+    }
+
+    const timestamp = new Date(data.timestamp).toLocaleTimeString();
+    updateElement.innerHTML = `
+        <span><strong>${data.coin}:</strong> $${currentPrice.toFixed(4)}</span>
+        <small>(${timestamp})</small>
+    `;
+  }
+
+</script>
+</body>
 </html>
